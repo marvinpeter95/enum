@@ -1,0 +1,147 @@
+{{- $enum := .Enum -}}
+{{- $options := .Options -}}
+{{- $errName := printf "ErrInvalid%s" $enum.Name -}}
+{{- $zeroValue := printf "%s(%s)" $enum.Name (ternary `""` "0" (eq $enum.Type "string")) -}}
+{{- $valueList := "" -}}
+{{- $quoteInt := ternary "\"" "" (eq $enum.Type "int") -}}
+{{- range $i, $v := $enum.Values -}}
+	{{- $valueList = printf "%s%s%s" $valueList (ternary ", " "" (ne $i 0)) $v.Value -}}
+{{- end -}}
+
+// {{ $errName }} is returned when an invalid value is provided for {{$enum.Name}}.
+var {{ $errName }} = errors.New("invalid {{ $enum.Name }}")
+
+{{- if not $options.SkipParser }}
+	// MustParse{{$enum.Name}} converts a string to a {{$enum.Name}}, and panics if is not valid.
+	func MustParse{{$enum.Name}}(value string) {{$enum.Name}} {
+		val, err := Parse{{$enum.Name}}(value)
+		if err != nil {
+			panic(err)
+		}
+		return val
+	}
+
+	// Parse{{$enum.Name}} attempts to convert a string to a {{$enum.Name}}.
+	func Parse{{$enum.Name}}(value string) ({{$enum.Name}}, error) {
+		{{- if eq $enum.Type "string" -}}
+			{{- if $options.CaseInsensitive }}
+				switch strings.ToLower(value) {
+					{{- range $enum.Values }}
+						case {{ .Value | lower }}:
+							return {{ .Name }}, nil
+					{{- end }}
+				}
+			{{- else }}
+				switch value {
+					{{- range $enum.Values }}
+						case {{ .Value }}:
+							return {{ .Name }}, nil
+					{{- end }}
+				}
+			{{- end }}
+		{{- else }}
+			switch value {
+				{{- range $enum.Values }}
+					case {{ printf "%q" .Value }}:
+						return {{ .Name }}, nil
+				{{- end }}
+			}
+		{{- end }}
+
+		return {{ $zeroValue }}, fmt.Errorf(`%w %q; possible values: {{ $valueList }}`, {{ $errName }}, value)
+		}
+{{- end }}
+
+// EnumValues identifies {{$enum.Name}} as an enum by returning a list of the possible values.
+func ({{$enum.Name}}) EnumValues() []{{$enum.Name}}  {
+	return []{{$enum.Name}}{ {{ range $enum.Values }}{{ .Name }}, {{ end }} }
+}
+
+
+// Type returns the type name of {{$enum.Name}}.
+func ({{$enum.Name}}) Type() string {
+	return "{{$enum.Name}}"
+}
+
+// EnumType returns the type name of {{$enum.Name}}.
+func ({{$enum.Name}}) EnumType() string {
+	return "{{$enum.Name}}"
+}
+
+// Set sets the value of the enum.
+func (e *{{$enum.Name}}) Set(v string) error {
+	{{- if not $options.SkipParser }}
+		var err error
+		*e, err = Parse{{$enum.Name}}(v)
+		return err
+	{{- else }}
+		{{- if eq $enum.Type "string" }}
+			s := strings.Trim(v, "\"")
+		{{- else }}
+			s, err := strconv.Atoi(v)
+			if err != nil {
+				return fmt.Errorf("%w: %w", {{ $errName }}, err)
+			}
+		{{- end }}
+		newValue := {{$enum.Name}}(s)
+		if err := newValue.Validate(); err != nil {
+			return err
+		}
+		*e = newValue
+		return nil
+	{{- end }}
+}
+
+// IsValid provides a quick way to determine if the typed value is
+// part of the allowed enumerated values.
+func (e {{$enum.Name}}) IsValid() bool {
+	return e.Validate() == nil
+}
+
+// Validate checks if the typed value is  part of the allowed enumerated
+// values. If not it returns an error.
+func (e {{$enum.Name}}) Validate() error {
+	switch {{$enum.Type}}(e) {
+		{{- range $enum.Values }}
+			case {{ .Value }}:
+				return nil
+		{{- end }}
+	}
+
+	return fmt.Errorf(`%w %q; possible values: {{ $valueList }}`, {{ $errName }}, e.String())
+}
+
+// String implements the Stringer interface.
+func (e {{$enum.Name}}) String() string {
+	return {{ if eq $enum.Type "string" }} string(e) {{ else }} strconv.Itoa(int(e)) {{ end }}
+}
+
+// GoString implements the GoStringer interface.
+func (e {{$enum.Name}}) GoString() string {
+	switch {{$enum.Type}}(e) {
+		{{- range $enum.Values }}
+			case {{ .Value }}:
+				return `{{ .String }}`
+		{{- end }}
+	}
+
+	return ""
+}
+
+{{- if not $options.SkipTextMarshaling }}
+	// MarshalText implements the text marshaller method.
+	func (e {{$enum.Name}}) MarshalText() ([]byte, error) {
+		return []byte(e.String()), nil
+	}
+
+	// UnmarshalText implements the text unmarshaller method.
+	func (e *{{$enum.Name}}) UnmarshalText(text []byte) error {
+		name := string(text)
+		tmp, err := Parse{{$enum.Name}}(name)
+		if err != nil {
+			return err
+		}
+		*e = tmp
+		return nil
+	}
+{{- end }}
