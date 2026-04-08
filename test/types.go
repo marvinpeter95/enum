@@ -1,4 +1,4 @@
-//go:generate go run ./../cmd/ -types Color,Mode -case-insensitive
+//go:generate go run ./../cmd/enum/ -types Color,Mode -case-insensitive
 package test
 
 import (

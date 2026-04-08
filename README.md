@@ -7,7 +7,7 @@ Generate common methods for Golang enums.
 ### Installation
 
 ```bash
-go install github.com/marvinpeter95/enum
+go install github.com/marvinpeter95/enum/cmd/enum@latest
 ```
 
 ### Command Line

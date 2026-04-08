@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/marvinpeter95/enum/cmd/generator"
+	"github.com/marvinpeter95/enum/cmd/enum/generator"
 )
 
 func main() {

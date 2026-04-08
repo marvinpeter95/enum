@@ -10,7 +10,7 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	"golang.org/x/tools/imports"
 
-	"github.com/marvinpeter95/enum/cmd/generator/parser"
+	"github.com/marvinpeter95/enum/cmd/enum/generator/parser"
 )
 
 //go:embed templates/enum.gotpl
