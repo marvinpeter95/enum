@@ -60,7 +60,7 @@ func main() {
 
 	// Write the generated code to an output file with a suffix "_enum.go".
 	outputFilename := strings.TrimSuffix(filename, ".go") + "_enum.go"
-	if err := os.WriteFile(outputFilename, code, 0o644); err != nil {
+	if err := os.WriteFile(outputFilename, code, 0o600); err != nil {
 		fmt.Fprintln(os.Stderr, "Error: failed to write generated code to file: ", err)
 		os.Exit(1)
 	}
