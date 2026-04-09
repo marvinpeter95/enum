@@ -49,11 +49,24 @@ func (Color) EnumType() string {
 	return "Color"
 }
 
-// Set sets the value of the enum.
+// Set sets the value of the enum from a string. This is required to make enums usable as pflags.
+// It returns an error if the provided string is not a valid value for the enum.
 func (e *Color) Set(v string) error {
 	var err error
 	*e, err = ParseColor(v)
 	return err
+}
+
+// SetValue sets the value of the enum from another value of the same type. This is a more efficient
+// way to set the value of the enum, as it avoids the need to parse a string. This is not required
+// for pflags, but it can be useful in other contexts.
+// It returns an error if the provided value is not a valid value for the enum.
+func (e *Color) SetValue(v Color) error {
+	if err := v.Validate(); err != nil {
+		return err
+	}
+	*e = v
+	return nil
 }
 
 // IsValid provides a quick way to determine if the typed value is
@@ -130,17 +143,26 @@ func (Mode) EnumType() string {
 	return "Mode"
 }
 
-// Set sets the value of the enum.
+// Set sets the value of the enum from a string. This is required to make enums usable as pflags.
+// It returns an error if the provided string is not a valid value for the enum.
 func (e *Mode) Set(v string) error {
 	s, err := strconv.Atoi(v)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrInvalidMode, err)
 	}
 	newValue := Mode(s)
-	if err := newValue.Validate(); err != nil {
+	return e.SetValue(newValue)
+}
+
+// SetValue sets the value of the enum from another value of the same type. This is a more efficient
+// way to set the value of the enum, as it avoids the need to parse a string. This is not required
+// for pflags, but it can be useful in other contexts.
+// It returns an error if the provided value is not a valid value for the enum.
+func (e *Mode) SetValue(v Mode) error {
+	if err := v.Validate(); err != nil {
 		return err
 	}
-	*e = newValue
+	*e = v
 	return nil
 }
 

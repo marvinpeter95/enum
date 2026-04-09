@@ -5,12 +5,16 @@ import (
 	"github.com/marvinpeter95/enum"
 )
 
-var (
-	_ enum.Enum        = (*Color)(nil)
-	_ enum.EnumPointer = (*Color)(nil)
-	_ enum.Enum        = (*Mode)(nil)
-	_ enum.EnumPointer = (*Mode)(nil)
-)
+func init() {
+	assertEnum[Color]()
+	assertEnum[Mode]()
+	assertEnumPointer[Color]()
+	assertEnumPointer[Mode]()
+}
+
+func assertEnum[E enum.Enum[E]]() {}
+
+func assertEnumPointer[E enum.Enum[E], EP enum.EnumPointer[E]]() {}
 
 type ABC int
 

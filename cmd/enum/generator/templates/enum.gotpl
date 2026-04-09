@@ -68,7 +68,8 @@ func ({{$enum.Name}}) EnumType() string {
 	return "{{$enum.Name}}"
 }
 
-// Set sets the value of the enum.
+// Set sets the value of the enum from a string. This is required to make enums usable as pflags.
+// It returns an error if the provided string is not a valid value for the enum.
 func (e *{{$enum.Name}}) Set(v string) error {
 	{{- if not $options.SkipParser }}
 		var err error
@@ -84,12 +85,20 @@ func (e *{{$enum.Name}}) Set(v string) error {
 			}
 		{{- end }}
 		newValue := {{$enum.Name}}(s)
-		if err := newValue.Validate(); err != nil {
-			return err
-		}
-		*e = newValue
-		return nil
+		return e.SetValue(newValue)
 	{{- end }}
+}
+
+// SetValue sets the value of the enum from another value of the same type. This is a more efficient
+// way to set the value of the enum, as it avoids the need to parse a string. This is not required
+// for pflags, but it can be useful in other contexts.
+// It returns an error if the provided value is not a valid value for the enum.
+func (e *{{$enum.Name}}) SetValue(v {{$enum.Name}}) error {
+	if err := v.Validate(); err != nil {
+		return err
+	}
+	*e = v
+	return nil
 }
 
 // IsValid provides a quick way to determine if the typed value is
