@@ -72,6 +72,8 @@ func Process(filename string, types []string, options Options) ([]byte, error) {
 		if err := tpl.Execute(&buf, &td); err != nil {
 			return nil, fmt.Errorf("failed to execute code template: %w", err)
 		}
+
+		fmt.Fprint(&buf, "\n")
 	}
 
 	// Format the generated code using go-imports to ensure proper formatting and import management.
