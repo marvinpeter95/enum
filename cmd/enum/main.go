@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/marvinpeter95/enum/cmd/enum/generator"
@@ -20,6 +21,7 @@ func main() {
 			"Do not generate MarshalText and UnmarshalText methods for the enums")
 		flagNoParser = flag.Bool("no-parser", false,
 			"Do not generate Parse[Enum] functions for the enums")
+		flagOutput = flag.String("output", "", "Output filename (default: input filename with _enum.go suffix)")
 	)
 
 	flag.Parse()
@@ -34,6 +36,12 @@ func main() {
 	} else {
 		fmt.Fprintln(os.Stderr, "Error: no input file specified")
 		os.Exit(1)
+	}
+
+	if flagOutput != nil && *flagOutput != "" {
+		flagOutput = new(filepath.Join(filepath.Dir(filename), *flagOutput))
+	} else {
+		flagOutput = new(strings.TrimSuffix(filename, ".go") + "_enum.go")
 	}
 
 	// Ensure that types are specified for code generation.
@@ -58,9 +66,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Write the generated code to an output file with a suffix "_enum.go".
-	outputFilename := strings.TrimSuffix(filename, ".go") + "_enum.go"
-	if err := os.WriteFile(outputFilename, code, 0o600); err != nil {
+	// Write the generated code to an output file
+	if err := os.WriteFile(*flagOutput, code, 0o600); err != nil {
 		fmt.Fprintln(os.Stderr, "Error: failed to write generated code to file: ", err)
 		os.Exit(1)
 	}
